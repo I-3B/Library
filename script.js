@@ -1,8 +1,18 @@
-var library=[];
+var library=JSON.parse(localStorage.getItem('library'));
 const libraryDisplay=document.querySelector('.library');
 const addCard=document.querySelector('.add-card');
 const body=document.querySelector('body');
-var idCounter=0;
+var idCounter=parseInt(localStorage.getItem('counter'));
+
+idCounter=Number.isInteger(idCounter)?idCounter:0;
+library=library==null?[]:library;
+
+showRetrived();
+
+function showRetrived(){
+    library.forEach(i=>console.log(i));
+    library.forEach(i=>addTOLibraryDisplay(i));
+}
 function showForm(){
     form=document.createElement('div');
     form.setAttribute('class','form-container');
@@ -76,8 +86,8 @@ function addToLibrary(){
     if(checkAuthor()&&checkPages()&&checkTitle()){
         library.push(new Book(formTitle,formAuthor,formPages,formRead));
         removerForm();
-        addTOLibraryDisplay();
-        refresh();
+        addTOLibraryDisplay(library[library.length-1]);
+        updateStorage();
     }   
 
 }
@@ -92,16 +102,19 @@ function checkAuthor(){
     return formAuthor.length>0&&formAuthor.length<41;
 }
 
-function addTOLibraryDisplay(){
-    let temp=document.createElement('div');
+function addTOLibraryDisplay(i){
+    temp=document.createElement('div');
     temp.setAttribute('class','card book');
-    temp.setAttribute('id','library[library.length-1].id')
+    temp.setAttribute('id',`${library[library.length-1].id}`)
     temp.innerHTML=`
-        <div class="name">${formTitle}</div>
-        <div class="author">${formAuthor}</div>
-        <div class="pages">Pages: ${formPages}</div>
-        <div class="card-button read">${formRead}</div>
+        <div class="name">${i.title}</div>
+        <div class="author">${i.author}</div>
+        <div class="pages">Pages: ${i.pages}</div>
+        <div class="card-button read">${i.read}</div>
         <div class="card-button remove">Remove</div>`;
+    if(i.read=='Read'){
+    temp.querySelector('.read').setAttribute('style','background-color:rgb(0, 187, 31);');
+    }
     libraryDisplay.insertAdjacentElement('afterbegin',temp);
     refresh();
 }
@@ -112,16 +125,44 @@ function Book(title,author,pages,read){
     this.pages=pages;
     this.read=read;
     this.id=idCounter++;
-    console.log(this.id);
 }
 
 function refresh(){
-    var remove=document.querySelectorAll('.remove');
-    remove.forEach(i=>{
-        console.log(i.parentElement.id);
+    let remove=document.querySelectorAll('.remove');
+    let readState=document.querySelectorAll('.read'); 
+    remove.forEach(book=>{
+        book.addEventListener('click',()=>{
+            removeFromLibrary(book);
+            book.parentNode.remove();
+            
+        })
+    })
+    readState.forEach(i=>{
+        i.addEventListener('click',()=>{
+            let id=parseInt(i.parentNode.id);
+            let index=library.findIndex(i=>i.id==id);
+            
+            if(i.textContent=='Read'){
+            i.textContent='Plan to read';
+            library[index].read=false;
+            i.setAttribute('style','background-color: rgb(27, 74, 230);');
+            }
+            else{
+            i.textContent='Read';
+            library[index].read=true;
+            i.setAttribute('style','background-color:rgb(0, 187, 31);');
+            }
+        })
     })
 }
-function removeBook(n){
-
+function removeFromLibrary(removeButton){
+    let id=parseInt(removeButton.parentNode.id);
+    let index=library.findIndex(i=>i.id==id);
+    library.splice(index,index+1);
+    updateStorage();
+}
+function updateStorage(){
+    localStorage.setItem('library', JSON.stringify(library));
+    localStorage.setItem('counter',idCounter);
 }
 addCard.addEventListener('click',showForm);
