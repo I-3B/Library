@@ -10,7 +10,6 @@ library=library==null?[]:library;
 showRetrived();
 
 function showRetrived(){
-    library.forEach(i=>console.log(i));
     library.forEach(i=>addTOLibraryDisplay(i));
 }
 function showForm(){
@@ -102,21 +101,24 @@ function checkAuthor(){
     return formAuthor.length>0&&formAuthor.length<41;
 }
 
-function addTOLibraryDisplay(i){
+function addTOLibraryDisplay(book){
     temp=document.createElement('div');
     temp.setAttribute('class','card book');
-    temp.setAttribute('id',`${library[library.length-1].id}`)
+    temp.setAttribute('id',`${book.id}`)
     temp.innerHTML=`
-        <div class="name">${i.title}</div>
-        <div class="author">${i.author}</div>
-        <div class="pages">Pages: ${i.pages}</div>
-        <div class="card-button read">${i.read}</div>
+        <div class="name">${book.title}</div>
+        <div class="author">${book.author}</div>
+        <div class="pages">Pages: ${book.pages}</div>
+        <div class="card-button read">${book.read}</div>
         <div class="card-button remove">Remove</div>`;
-    if(i.read=='Read'){
+    if(book.read=='Read'){
     temp.querySelector('.read').setAttribute('style','background-color:rgb(0, 187, 31);');
     }
+    else{
+    temp.querySelector('.read').setAttribute('style','background-color: rgb(27, 74, 230);');
+    }
     libraryDisplay.insertAdjacentElement('afterbegin',temp);
-    refresh();
+    addListeners(temp);
 }
 
 function Book(title,author,pages,read){
@@ -127,36 +129,34 @@ function Book(title,author,pages,read){
     this.id=idCounter++;
 }
 
-function refresh(){
-    let remove=document.querySelectorAll('.remove');
-    let readState=document.querySelectorAll('.read'); 
-    remove.forEach(book=>{
-        book.addEventListener('click',()=>{
-            removeFromLibrary(book);
-            book.parentNode.remove();
-            
-        })
-    })
-    readState.forEach(i=>{
-        i.addEventListener('click',()=>{
-            let id=parseInt(i.parentNode.id);
-            let index=library.findIndex(i=>i.id==id);
-            
-            if(i.textContent=='Read'){
-            i.textContent='Plan to read';
-            library[index].read=false;
-            i.setAttribute('style','background-color: rgb(27, 74, 230);');
-            }
-            else{
-            i.textContent='Read';
-            library[index].read=true;
-            i.setAttribute('style','background-color:rgb(0, 187, 31);');
-            }
-        })
+function addListeners(bookDisplay){
+    let remove=bookDisplay.querySelector('.remove');
+    let readState=bookDisplay.querySelector('.read');
+
+    remove.addEventListener('click',()=>{
+        removeFromLibrary(bookDisplay);
+        bookDisplay.remove();
+        updateStorage();
+    });
+
+    readState.addEventListener('click',()=>{
+        let id=bookDisplay.id;
+        let index=library.findIndex(i=>i.id==id);
+        if(readState.textContent=='Read'){
+        readState.textContent='Plan to read';
+        library[index].read='Plan to read';
+        readState.setAttribute('style','background-color: rgb(27, 74, 230);');
+        }
+        else{
+        readState.textContent='Read';
+        library[index].read='Read';
+        readState.setAttribute('style','background-color:rgb(0, 187, 31);');
+        }
+        updateStorage();
     })
 }
 function removeFromLibrary(removeButton){
-    let id=parseInt(removeButton.parentNode.id);
+    let id=parseInt(removeButton.id);
     let index=library.findIndex(i=>i.id==id);
     library.splice(index,index+1);
     updateStorage();
